@@ -3,13 +3,24 @@ module DeviseTokenAuth
     skip_before_filter :set_user_by_token
     skip_after_filter :update_auth_header
 
+
     # intermediary route for successful omniauth authentication. omniauth does
     # not support multiple models, so we must resort to this terrible hack.
     def redirect_callbacks
       # derive target redirect route from 'resource_class' param, which was set
       # before authentication.
-      devise_mapping = request.env['omniauth.params']['resource_class'].underscore.to_sym
-      redirect_route = "/#{Devise.mappings[devise_mapping].as_json["path"]}/#{params[:provider]}/callback"
+
+      # For some reason Rails session is not loaded yet
+      # so request.env['omniauth.params'] will be nil. Forcing session load
+      # so we get the actual value.
+      session["init"] = true
+
+      devise_mapping =
+        request.env['omniauth.params']['resource_class'].underscore.to_sym
+
+      redirect_route = "/#{Devise.mappings[devise_mapping].as_json["path"]}" +
+        "/#{params[:provider]}/callback"
+
 
       # preserve omniauth info for success route. ignore 'extra' in twitter
       # auth response to avoid CookieOverflow.
@@ -18,6 +29,7 @@ module DeviseTokenAuth
 
       redirect_to redirect_route
     end
+
 
     def omniauth_success
       # find or create user by provider and provider uid
