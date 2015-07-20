@@ -1,8 +1,8 @@
 include MigrationDatabaseHelper
 
-class DeviseTokenAuthCreateNiceUsers < ActiveRecord::Migration
+class DeviseTokenAuthCreateUnconfirmableUsers < ActiveRecord::Migration
   def change
-    create_table(:nice_users) do |t|
+    create_table(:unconfirmable_users) do |t|
       ## Required
       t.string :provider, :null => false
       t.string :uid, :null => false, :default => ""
@@ -25,10 +25,10 @@ class DeviseTokenAuthCreateNiceUsers < ActiveRecord::Migration
       t.string   :last_sign_in_ip
 
       ## Confirmable
-      t.string   :confirmation_token
-      t.datetime :confirmed_at
-      t.datetime :confirmation_sent_at
-      t.string   :unconfirmed_email # Only if using reconfirmable
+      # t.string   :confirmation_token
+      # t.datetime :confirmed_at
+      # t.datetime :confirmation_sent_at
+      # t.string   :unconfirmed_email # Only if using reconfirmable
 
       ## Lockable
       # t.integer  :failed_attempts, :default => 0, :null => false # Only if lock strategy is :failed_attempts
@@ -51,9 +51,9 @@ class DeviseTokenAuthCreateNiceUsers < ActiveRecord::Migration
       t.timestamps
     end
 
-    add_index :nice_users, :email
-    add_index :nice_users, [:uid, :provider],     :unique => true
-    add_index :nice_users, :reset_password_token, :unique => true
+    add_index :unconfirmable_users, :email
+    add_index :unconfirmable_users, [:uid, :provider],     :unique => true
+    add_index :unconfirmable_users, :reset_password_token, :unique => true
     # add_index :nice_users, :confirmation_token,   :unique => true
     # add_index :nice_users, :unlock_token,         :unique => true
   end

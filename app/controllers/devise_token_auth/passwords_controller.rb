@@ -9,7 +9,7 @@ module DeviseTokenAuth
       unless resource_params[:email]
         return render json: {
           success: false,
-          errors: ['You must provide an email address.']
+          errors: [I18n.t("devise_token_auth.passwords.missing_email")]
         }, status: 401
       end
 
@@ -22,7 +22,7 @@ module DeviseTokenAuth
       unless redirect_url
         return render json: {
           success: false,
-          errors: ['Missing redirect url.']
+          errors: [I18n.t("devise_token_auth.passwords.missing_redirect_url")]
         }, status: 401
       end
 
@@ -32,7 +32,7 @@ module DeviseTokenAuth
           return render json: {
             status: 'error',
             data:   @resource.as_json,
-            errors: ["Redirect to #{redirect_url} not allowed."]
+            errors: [I18n.t("devise_token_auth.passwords.not_allowed_redirect_url", redirect_url: redirect_url)]
           }, status: 403
         end
       end
@@ -57,6 +57,7 @@ module DeviseTokenAuth
       error_status = 400
 
       if @resource
+        yield if block_given?
         @resource.send_reset_password_instructions({
           email: email,
           provider: 'email',
@@ -67,14 +68,13 @@ module DeviseTokenAuth
         if @resource.errors.empty?
           render json: {
             success: true,
-            message: "An email has been sent to #{email} containing "+
-              "instructions for resetting your password."
+            message: I18n.t("devise_token_auth.passwords.sended", email: email)
           }
         else
           errors = @resource.errors
         end
       else
-        errors = ["Unable to find user with email '#{email}'."]
+        errors = [I18n.t("devise_token_auth.passwords.user_not_found", email: email)]
         error_status = 404
       end
 
@@ -105,9 +105,10 @@ module DeviseTokenAuth
         }
 
         # ensure that user is confirmed
-        @resource.skip_confirmation! unless @resource.confirmed_at
+        @resource.skip_confirmation! if @resource.devise_modules.include?(:confirmable) && !@resource.confirmed_at
 
         @resource.save!
+        yield if block_given?
 
         redirect_to(@resource.build_auth_url(params[:redirect_url], {
           token:          token,
@@ -116,7 +117,9 @@ module DeviseTokenAuth
           config:         params[:config]
         }))
       else
-        raise ActionController::RoutingError.new('Not Found')
+        render json: {
+          success: false
+        }, status: 404
       end
     end
 
@@ -133,8 +136,7 @@ module DeviseTokenAuth
       unless @resource.provider == 'email'
         return render json: {
           success: false,
-          errors: ["This account does not require a password. Sign in using "+
-                   "your #{@resource.provider.humanize} account instead."]
+          errors: [I18n.t("devise_token_auth.passwords.password_not_required", provider: @resource.provider.humanize)]
         }, status: 422
       end
 
@@ -142,16 +144,17 @@ module DeviseTokenAuth
       unless password_resource_params[:password] and password_resource_params[:password_confirmation]
         return render json: {
           success: false,
-          errors: ['You must fill out the fields labeled "password" and "password confirmation".']
+          errors: [I18n.t("devise_token_auth.passwords.missing_passwords")]
         }, status: 422
       end
 
       if @resource.update_attributes(password_resource_params)
+        yield if block_given?
         return render json: {
           success: true,
           data: {
             user: @resource,
-            message: "Your password has been successfully updated."
+            message: I18n.t("devise_token_auth.passwords.successfully_updated")
           }
         }
       else

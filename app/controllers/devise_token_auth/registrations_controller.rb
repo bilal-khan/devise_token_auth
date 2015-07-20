@@ -12,6 +12,7 @@ module DeviseTokenAuth
       # honor devise configuration for case_insensitive_keys
       if resource_class.case_insensitive_keys.include?(:email)
         @resource.email = sign_up_params[:email].to_s.downcase
+
       else
         @resource.email = sign_up_params[:email]
       end
@@ -27,7 +28,7 @@ module DeviseTokenAuth
         return render json: {
           status: 'error',
           data:   @resource.as_json,
-          errors: ["Missing `confirm_success_url` param."]
+          errors: [I18n.t("devise_token_auth.registrations.missing_confirm_success_url")]
         }, status: 403
       end
 
@@ -37,7 +38,7 @@ module DeviseTokenAuth
           return render json: {
             status: 'error',
             data:   @resource.as_json,
-            errors: ["Redirect to #{redirect_url} not allowed."]
+            errors: [I18n.t("devise_token_auth.registrations.redirect_url_not_allowed", redirect_url: redirect_url)]
           }, status: 403
         end
       end
@@ -87,15 +88,14 @@ module DeviseTokenAuth
         render json: {
           status: 'error',
           data:   @resource.as_json,
-          errors: ["An account already exists for #{@resource.email}"]
+          errors: [I18n.t("devise_token_auth.registrations.email_already_exists", email: @resource.email)]
         }, status: 403
       end
     end
 
     def update
       if @resource
-
-        if @resource.update_attributes(account_update_params)
+        if @resource.send(resource_update_method, account_update_params)
           yield @resource if block_given?
           render json: {
             status: 'success',
@@ -110,7 +110,7 @@ module DeviseTokenAuth
       else
         render json: {
           status: 'error',
-          errors: ["User not found."]
+          errors: [I18n.t("devise_token_auth.registrations.user_not_found")]
         }, status: 404
       end
     end
@@ -122,12 +122,12 @@ module DeviseTokenAuth
 
         render json: {
           status: 'success',
-          message: "Account with uid #{@resource.uid} has been destroyed."
+          message: I18n.t("devise_token_auth.registrations.account_with_uid_destroyed", uid: @resource.uid)
         }
       else
         render json: {
           status: 'error',
-          errors: ["Unable to locate account for destruction."]
+          errors: [I18n.t("devise_token_auth.registrations.account_to_destroy_not_found")]
         }, status: 404
       end
     end
@@ -142,12 +142,20 @@ module DeviseTokenAuth
 
     private
 
+    def resource_update_method
+      if account_update_params.has_key?(:current_password)
+        "update_with_password"
+      else
+        "update_attributes"
+      end
+    end
+
     def validate_sign_up_params
-      validate_post_data sign_up_params, 'Please submit proper sign up data in request body.'
+      validate_post_data sign_up_params, I18n.t("errors.validate_sign_up_params")
     end
 
     def validate_account_update_params
-      validate_post_data account_update_params, 'Please submit proper account update data in request body.'
+      validate_post_data account_update_params, I18n.t("errors.validate_account_update_params")
     end
 
     def validate_post_data which, message

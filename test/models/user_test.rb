@@ -86,5 +86,26 @@ class UserTest < ActiveSupport::TestCase
         assert @resource.tokens[@new_auth_headers["client"]]
       end
     end
+
+    describe 'nil tokens are handled properly' do
+      before do
+        @resource = users(:confirmed_email_user)
+        @resource.skip_confirmation!
+        @resource.save!
+      end
+
+      test 'tokens can be set to nil' do
+        @resource.tokens = nil
+        assert @resource.save
+      end
+    end
+
+    describe "#generate_url" do
+      test 'URI fragment should appear at the end of URL' do
+        params = {client_id: 123}
+        url = 'http://example.com#fragment'
+        assert_equal @resource.send(:generate_url, url, params), "http://example.com?client_id=123#fragment"
+      end
+    end
   end
 end
