@@ -58,7 +58,7 @@ module DeviseTokenAuth
 
       if @resource
         yield if block_given?
-        @resource.send_reset_password_instructions({
+        @resource.email_reset_password_instructions({
           email: email,
           provider: 'email',
           redirect_url: redirect_url,

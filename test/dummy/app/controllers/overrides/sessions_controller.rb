@@ -5,7 +5,7 @@ module Overrides
     def create
       @resource = resource_class.find_by_email(resource_params[:email])
 
-      if @resource and valid_params?(:email, resource_params[:email]) and @resource.valid_password?(resource_params[:password]) and @resource.confirmed?
+      if @resource and valid_params?(:email, resource_params[:email]) and @resource.valid_password?(resource_params[:password]) and @resource.email_confirmed?
         # create client id
         @client_id = SecureRandom.urlsafe_base64(nil, false)
         @token     = SecureRandom.urlsafe_base64(nil, false)
@@ -23,7 +23,7 @@ module Overrides
           override_proof: OVERRIDE_PROOF
         }
 
-      elsif @resource and not @resource.confirmed?
+      elsif @resource and not @resource.email_confirmed?
         render json: {
           success: false,
           errors: [

@@ -736,7 +736,7 @@ class DeviseTokenAuth::RegistrationsControllerTest < ActionDispatch::Integration
       end
 
       test "user was confirmed" do
-        assert @resource.confirmed?
+        assert @resource.email_confirmed?
       end
 
       test "auth headers were returned in response" do
@@ -779,7 +779,7 @@ class DeviseTokenAuth::RegistrationsControllerTest < ActionDispatch::Integration
       end
 
       test 'user is confirmed' do
-        assert @resource.confirmed?
+        assert @resource.email_confirmed?
       end
     end
   end

@@ -1,19 +1,23 @@
 module DeviseTokenAuth::Concerns::SetUserByToken
+
   extend ActiveSupport::Concern
   include DeviseTokenAuth::Controllers::Helpers
+
 
   included do
     before_action :set_request_start
     after_action :update_auth_header
   end
 
+
   # keep track of request duration
   def set_request_start
     @request_started_at = Time.now
   end
 
+
   # user auth
-  def set_user_by_token(mapping=nil)
+  def set_user_by_token(mapping = nil)
     # determine target authentication class
     rc = resource_class(mapping)
 
@@ -52,6 +56,7 @@ module DeviseTokenAuth::Concerns::SetUserByToken
     if user && user.valid_token?(@token, @client_id)
       sign_in(:user, user, store: false, bypass: true)
       return @resource = user
+
     else
       # zero all values previously set values
       @client_id = nil
@@ -71,7 +76,6 @@ module DeviseTokenAuth::Concerns::SetUserByToken
       response.headers.merge!(auth_header)
 
     else
-
       # Lock the user record during any auth_header updates to ensure
       # we don't have write contention from multiple threads
       @resource.with_lock do
@@ -94,16 +98,15 @@ module DeviseTokenAuth::Concerns::SetUserByToken
           # update the response header
           response.headers.merge!(auth_header)
         end
-
       end # end lock
-
     end
-
   end
 
-  def resource_class(m=nil)
+
+  def resource_class(m = nil)
     if m
       mapping = Devise.mappings[m]
+
     else
       mapping = Devise.mappings[resource_name] || Devise.mappings.values.first
     end
@@ -112,12 +115,16 @@ module DeviseTokenAuth::Concerns::SetUserByToken
   end
 
 
+
   private
+
 
 
   def is_batch_request?(user, client_id)
     user.tokens[client_id] and
     user.tokens[client_id]['updated_at'] and
-    Time.parse(user.tokens[client_id]['updated_at']) > @request_started_at - DeviseTokenAuth.batch_request_buffer_throttle
+    (Time.parse(user.tokens[client_id]['updated_at']) >
+      @request_started_at - DeviseTokenAuth.batch_request_buffer_throttle)
   end
+
 end

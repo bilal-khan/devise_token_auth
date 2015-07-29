@@ -51,8 +51,12 @@ module DeviseTokenAuth::Concerns::User
       false
     end
 
-    # override devise method to include additional info as opts hash
-    def send_confirmation_instructions(opts=nil)
+    # override devise method to name for email and to
+    # include additional info as opts hash
+    def send_confirmation_instructions
+    end
+
+    def send_email_confirmation_instructions(opts=nil)
       unless @raw_confirmation_token
         generate_confirmation_token!
       end
@@ -69,8 +73,12 @@ module DeviseTokenAuth::Concerns::User
       send_devise_notification(:confirmation_instructions, @raw_confirmation_token, opts)
     end
 
-    # override devise method to include additional info as opts hash
-    def send_reset_password_instructions(opts=nil)
+    # override devise method to name for email and to
+    # include additional info as opts hash
+    def send_reset_password_instructions
+    end
+
+    def email_reset_password_instructions(opts=nil)
       token = set_reset_password_token
 
       opts ||= {}
@@ -84,9 +92,10 @@ module DeviseTokenAuth::Concerns::User
     end
   end
 
+
   module ClassMethods
     protected
-    
+
 
     def tokens_has_json_column_type?
       table_exists? && self.columns_hash['tokens'] && self.columns_hash['tokens'].type.in?([:json, :jsonb])
@@ -209,9 +218,40 @@ module DeviseTokenAuth::Concerns::User
     return build_auth_header(token, client_id)
   end
 
-  def confirmed?
-    self.devise_modules.exclude?(:confirmable) || super
+
+  def from_omniauth?
+    provider.present? && provider != 'email'
   end
+
+
+  # Devise confirm only supports email. Here we call the parent confirmed?
+  # to check if email confirmed, and override confirmed? to include phone
+  # and email.
+  def email_confirmed?
+    self.devise_modules.exclude?(:confirmable) ||
+      Parent.instance_method(:confirmed?).bind(self).call
+  end
+
+
+  def phone_required?
+    true
+  end
+
+
+  def phone_confirmed?
+    (! phone_required?) || (phone.present? && phone_confirmed_at.present?)
+  end
+
+
+  def confirmed?
+    phone_confirmed? && email_confirmed?
+  end
+
+
+  def phone_confirmation_requested?
+    phone.present? && phone_confirmation_sent_at.present?
+  end
+
 
   def token_validation_response
     self.as_json(except: [

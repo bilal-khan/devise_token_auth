@@ -7,7 +7,7 @@ class Custom::ConfirmationsControllerTest < ActionController::TestCase
     before do
       @redirect_url = Faker::Internet.url
       @new_user = users(:unconfirmed_email_user)
-      @new_user.send_confirmation_instructions({
+      @new_user.send_email_confirmation_instructions({
         redirect_url: @redirect_url
       })
       @mail          = ActionMailer::Base.deliveries.last

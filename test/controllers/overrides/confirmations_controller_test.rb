@@ -13,7 +13,7 @@ class Overrides::ConfirmationsControllerTest < ActionDispatch::IntegrationTest
       @new_user     = evil_users(:unconfirmed_email_user)
 
       # generate + send email
-      @new_user.send_confirmation_instructions({
+      @new_user.send_email_confirmation_instructions({
         redirect_url: @redirect_url
       })
 
@@ -28,7 +28,7 @@ class Overrides::ConfirmationsControllerTest < ActionDispatch::IntegrationTest
     end
 
     test "user is confirmed" do
-      assert @new_user.confirmed?
+      assert @new_user.email_confirmed?
     end
 
     test "user can be authenticated via confirmation link" do

@@ -8,11 +8,11 @@ require 'test_helper'
 
 class DeviseTokenAuth::ConfirmationsControllerTest < ActionController::TestCase
   describe DeviseTokenAuth::ConfirmationsController do
-    describe "Confirmation" do
+    describe "Email Confirmation" do
       before do
         @redirect_url = Faker::Internet.url
         @new_user = users(:unconfirmed_email_user)
-        @new_user.send_confirmation_instructions({
+        @new_user.send_email_confirmation_instructions({
           redirect_url: @redirect_url
         })
         @mail          = ActionMailer::Base.deliveries.last
@@ -39,7 +39,7 @@ class DeviseTokenAuth::ConfirmationsControllerTest < ActionController::TestCase
         end
 
         test "user should now be confirmed" do
-          assert @resource.confirmed?
+          assert @resource.email_confirmed?
         end
 
         test "should redirect to success url" do
@@ -53,7 +53,7 @@ class DeviseTokenAuth::ConfirmationsControllerTest < ActionController::TestCase
             xhr :get, :show, {confirmation_token: "bogus"}
           }
           @resource = assigns(:resource)
-          refute @resource.confirmed?
+          refute @resource.email_confirmed?
         end
       end
     end
@@ -72,7 +72,7 @@ class DeviseTokenAuth::ConfirmationsControllerTest < ActionController::TestCase
         @config_name = "altUser"
         @new_user    = mangs(:unconfirmed_email_user)
 
-        @new_user.send_confirmation_instructions(client_config: @config_name)
+        @new_user.send_email_confirmation_instructions(client_config: @config_name)
 
         @mail          = ActionMailer::Base.deliveries.last
         @token         = @mail.body.match(/confirmation_token=(.*)\"/)[1]
@@ -99,7 +99,7 @@ class DeviseTokenAuth::ConfirmationsControllerTest < ActionController::TestCase
         end
 
         test "user should now be confirmed" do
-          assert @resource.confirmed?
+          assert @resource.email_confirmed?
         end
       end
     end
